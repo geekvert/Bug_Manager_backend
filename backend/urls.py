@@ -10,9 +10,9 @@ router.register('comments', CommentViewSet)
 router.register('tags', TagViewSet)
 
 urlpatterns = router.urls
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+
 urlpatterns += [
-    path('project_bug/', ProjectBugViewSet.as_view({'get': 'anon', 'post': 'create'})), # project page
+    path('project_bug/', ProjectBugViewSet.as_view({'get': 'list', 'post': 'create'})), # project page
     path('my_page/', MyPage.as_view({'get': 'list'})), # my page
     path('oauth/redirect/', Auth),
 

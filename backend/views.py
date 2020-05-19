@@ -149,9 +149,6 @@ class ProjectBugViewSet(ModelViewSet):
         queryset = Bug.objects.filter(project_id = self.nameMAPpk(project_name))
         return queryset
 
-    def anon(self):
-        return Response('data h ji data h')
-
 class MyPage(ModelViewSet):
     serializer_class = BugSerializer
 
