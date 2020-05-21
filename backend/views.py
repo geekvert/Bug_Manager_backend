@@ -1,30 +1,16 @@
-from django.http import HttpResponse
+import requests
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.viewsets import ModelViewSet
-from .serializers import *
-from .models import *
-from rest_framework import status, generics
 from rest_framework.response import Response
-import requests
-
+from rest_framework import status, generics
 from django.contrib.auth import login, logout
+from .models import *
+from .serializers import *
+from .permissions import *
 
-# from .permissions import *
-
-# default permission class would be isAuthenticated
-
-class BugViewSet(ModelViewSet):
-    serializer_class = BugSerializer
-    queryset = Bug.objects.all()
-
-class CommentViewSet(ModelViewSet):
-    serializer_class = CommentSerializer
-    queryset = Comment.objects.all()
-
-class TagViewSet(ModelViewSet):
-    serializer_class = TagSerializer
-    queryset = Tag.objects.all()
+from django.http import HttpResponse
+from rest_framework.decorators import action
 
 # Oauth wala view
 @api_view(['GET', 'POST'])
@@ -81,6 +67,9 @@ def Auth(request):
     try:
         exist = User.objects.get(enrollment_no=user['student']['enrolmentNumber'])
     except:
+        pass
+    else:
+        # here i will check whether this user has send access_token or not and log him/her in
         Response(
             data = 'You don\'t need to signup, user already exists.',
             status = status.HTTP_400_BAD_REQUEST
@@ -112,7 +101,6 @@ def Auth(request):
     try:
         newUser = User(username=full_name, email=email, enrollment_no=enr_no, first_name=fName, admin_status=admin_status, access_token=access_token, refresh_token=refresh_token)
         newUser.save()
-        login(request=request, user=user)
     except:
         return Response(
             data = 'Unable to create account.',
@@ -120,24 +108,22 @@ def Auth(request):
         )
 
     return Response(
-        data = 'Voila! Account created successfully!',
+        {'detail': 'Voila! Account created successfully!', 'access_token': access_token},
         status = status.HTTP_200_OK
     )
 
-class DisableUser(generics.UpdateAPIView):
-    pass
-# working viewsets
-
-class UserViewSet(ModelViewSet):
-    serializer_class = UserSerializer
-    queryset = User.objects.all()
-
+# homepage
 class ProjectViewSet(ModelViewSet):
+    lookup_field = 'name'
+    # permission_classes = [CreatorTeamAdminPermission]
     serializer_class = ProjectSerializer
     queryset = Project.objects.all()
 
+# project_page, bug_page
 class ProjectBugViewSet(ModelViewSet):
     serializer_class = BugSerializer
+    lookup_field = 'heading'
+    # permission_classes = [CreatorTeamAdminPermission]
 
     # function to map project_names to their ids
     def nameMAPpk(self, project_name):
@@ -145,12 +131,14 @@ class ProjectBugViewSet(ModelViewSet):
         return id
 
     def get_queryset(self):
-        project_name = self.request.query_params.get('pName')
+        project_name = self.request.query_params.get('project_name')
         queryset = Bug.objects.filter(project_id = self.nameMAPpk(project_name))
         return queryset
 
+# my_page
 class MyPage(ModelViewSet):
     serializer_class = BugSerializer
+    # permission_classes = [IsAuthenticated]
 
     # function to map usernames to their ids
     def nameMAPpk(self, my_name):
@@ -161,19 +149,37 @@ class MyPage(ModelViewSet):
         my_name = self.request.query_params.get('my_name')
         query1 = Bug.objects.filter(reported_by = self.nameMAPpk(my_name))
         query2 = Bug.objects.filter(assigned_to = self.nameMAPpk(my_name))
-        result = query1 | query2
-        return result
+        return query1 | query2
+
+# admin_page
+class UserViewSet(ModelViewSet):
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
+    permission_classes = [AdminPermission]
+    lookup_field = 'enrollment_no'
 
 
-
-
+# experimental stuff
 @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
 def testView(request):
-    return HttpResponse("Hello, World!")
+    # login(request=request, user=request.user)
+    return Response(request.data)
 
-@api_view(['GET', 'POST'])
-def testing(request):
-    if request.method == 'POST':
-        return Response({"message": "Got some data!", "data": request.data})
-    return Response(data = 'some message')
+class testViewSet(ModelViewSet):
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
+    lookup_field = 'enrollment_no'
+
+    @action(methods=['get'], detail=True)
+    def set_password(self, request, enrollment_no=None):
+        return Response(data=str(enrollment_no)+'schrondinger\'s cat')
+
+# most important thing that i have learned today
+class testing(ModelViewSet):
+    serializer_class = UserSerializer
+    lookup_url_kwarg = 'enr'
+
+    def get_queryset(self):
+        enr = self.kwargs.get(self.lookup_url_kwarg)
+        return User.objects.filter(enrollment_no=enr)

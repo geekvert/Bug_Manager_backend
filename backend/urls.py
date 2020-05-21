@@ -1,21 +1,20 @@
 from django.urls import path, include
-from rest_framework.routers import SimpleRouter
+from rest_framework.routers import DefaultRouter
 from .views import *
 
-router = SimpleRouter()
-router.register('users', UserViewSet) # admin page
-router.register('projects', ProjectViewSet) # Homepage
-router.register('bugs', BugViewSet) # update delete for project page
-router.register('comments', CommentViewSet)
-router.register('tags', TagViewSet)
+router = DefaultRouter()
+router.register('projects', ProjectViewSet) # homepage
+router.register('project_bug', ProjectBugViewSet, 'project_bug') # project_page, bug_page
+router.register('my_page', MyPage) # my_page
+router.register('users', UserViewSet) # admin_page
+
+router.register('users', testViewSet)
 
 urlpatterns = router.urls
 
 urlpatterns += [
-    path('project_bug/', ProjectBugViewSet.as_view({'get': 'list', 'post': 'create'})), # project page
-    path('my_page/', MyPage.as_view({'get': 'list'})), # my page
     path('oauth/redirect/', Auth),
 
-    path('zoo/', testing),
+    path('zoo/<enr>', testing.as_view({'get': 'list'})),
     path('test/', testView)
 ]

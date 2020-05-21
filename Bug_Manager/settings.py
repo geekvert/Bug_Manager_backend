@@ -28,12 +28,16 @@ INSTALLED_APPS = [
     'rest_framework',
     # 'rest_framework.authtoken',
     'djrichtextfield',
+    'oauth2_provider',
     'backend',
 ]
 
 AUTH_USER_MODEL = 'backend.User'
 
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',  # to be changed
     ]

@@ -4,15 +4,12 @@ from .models import *
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = '__all__'
+        fields = ['username', 'first_name', 'email', 'enrollment_no', 'admin_status', 'disabled_status', 'access_token', 'refresh_token']
 
 class ProjectSerializer(serializers.ModelSerializer):
-    creator = serializers.StringRelatedField()
-    team = serializers.StringRelatedField(many=True)
-
     class Meta:
         model = Project
-        fields= ['name', 'wiki', 'creator', 'team', 'timestamp']    # expt try '__all__'
+        fields= '__all__' # ['name', 'wiki', 'creator', 'team', 'timestamp']
 
 class ImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,26 +17,16 @@ class ImageSerializer(serializers.ModelSerializer):
         fields= '__all__'
 
 class BugSerializer(serializers.ModelSerializer):
-    reported_by = serializers.StringRelatedField()
-    assigned_to = serializers.StringRelatedField()
-    project = serializers.StringRelatedField()
-    tags = serializers.StringRelatedField(many=True)
-
     class Meta:
         model = Bug
-        fields= ['heading', 'description', 'status', 'reported_by', 'assigned_to', 'project', 'tags', 'timestamp']
+        fields= '__all__' # ['heading', 'description', 'status', 'reported_by', 'assigned_to', 'project', 'tags', 'timestamp']
 
 class CommentSerializer(serializers.ModelSerializer):
-    bug = serializers.StringRelatedField()
-    commentator = serializers.StringRelatedField()
-
     class Meta:
         model = Comment
-        fields = ['body', 'bug', 'commentator']
+        fields = '__all__'
 
 class TagSerializer(serializers.ModelSerializer):
-    creator = serializers.StringRelatedField()
-
     class Meta:
         model = Tag
-        fields= ['name', 'creator']
+        fields= '__all__'
