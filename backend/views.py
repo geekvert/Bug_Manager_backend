@@ -112,6 +112,10 @@ def Auth(request):
         status = status.HTTP_200_OK
     )
 
+# login after first time, i will write this after frontend
+def AfterLogin(request):
+    pass
+
 # homepage
 class ProjectViewSet(ModelViewSet):
     lookup_field = 'name'
