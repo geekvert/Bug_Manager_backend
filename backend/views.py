@@ -187,3 +187,8 @@ class testing(ModelViewSet):
     def get_queryset(self):
         enr = self.kwargs.get(self.lookup_url_kwarg)
         return User.objects.filter(enrollment_no=enr)
+
+@api_view(['GET', 'POST'])
+def testLogin(request):
+    lg = login(request, user=request.user)
+    Response(data=lg)

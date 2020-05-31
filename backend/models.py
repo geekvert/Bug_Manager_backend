@@ -31,7 +31,7 @@ class Tag(models.Model):
         return self.name
 
 class Bug(models.Model):
-    heading = models.CharField(max_length=100)
+    heading = models.CharField(max_length=50)
     description = models.TextField()
     reported_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='reported_by', on_delete=models.SET_NULL, null=True)
     assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='assigned_to', default=None, on_delete=models.SET_NULL, null=True)

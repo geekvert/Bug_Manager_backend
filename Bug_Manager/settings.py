@@ -26,10 +26,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    # 'rest_framework.authtoken',
+    'rest_framework.authtoken',
     'djrichtextfield',
     'oauth2_provider',
     'backend',
+    'channels'
 ]
 
 AUTH_USER_MODEL = 'backend.User'
@@ -83,7 +84,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'Bug_Manager.wsgi.application'
+ASGI_APPLICATION = 'Bug_Manager.routing.application'
 
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
