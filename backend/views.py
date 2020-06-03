@@ -159,25 +159,28 @@ class MyPage(ModelViewSet):
 class UserViewSet(ModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all()
-    permission_classes = [AdminPermission]
-    lookup_field = 'enrollment_no'
+    # permission_classes = [AdminPermission]
+    lookup_field = 'username'
 
 
 # experimental stuff
+
+class testViewSet(ModelViewSet):
+    serializer_class = ProjectSerializer
+    queryset = Project.objects.all()
+
+    
+
+    def create(self, request):
+        return Response({
+            'data': 'post method called'
+        })
+
 @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
 def testView(request):
     # login(request=request, user=request.user)
     return Response(request.data)
-
-class testViewSet(ModelViewSet):
-    serializer_class = UserSerializer
-    queryset = User.objects.all()
-    lookup_field = 'enrollment_no'
-
-    @action(methods=['get'], detail=True)
-    def set_password(self, request, enrollment_no=None):
-        return Response(data=str(enrollment_no)+'schrondinger\'s cat')
 
 # most important thing that i have learned today
 class testing(ModelViewSet):

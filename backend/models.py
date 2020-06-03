@@ -1,3 +1,4 @@
+import os
 from django.db import models
 from djrichtextfield.models import RichTextField
 from django.contrib.auth.models import AbstractUser
@@ -34,7 +35,7 @@ class Bug(models.Model):
     heading = models.CharField(max_length=50)
     description = models.TextField()
     reported_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='reported_by', on_delete=models.SET_NULL, null=True)
-    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='assigned_to', default=None, on_delete=models.SET_NULL, null=True)
+    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='assigned_to', default=None, on_delete=models.SET_NULL, null=True, blank=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     tags = models.ManyToManyField(Tag, blank=True, default=[])
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -50,8 +51,11 @@ class Bug(models.Model):
         return self.heading
 
 class Image(models.Model):
+    def upload_to(self, filename):
+        return os.path.join('backend', 'bug_images', self.bug.heading, filename)
+
     bug = models.ForeignKey(Bug, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to=f'backend/bug_images/{Bug.heading}')
+    image = models.ImageField(upload_to=upload_to)
 
     def __str__(self):
         return self.image.name
