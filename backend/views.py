@@ -194,4 +194,6 @@ class testing(ModelViewSet):
 @api_view(['GET', 'POST'])
 def testLogin(request):
     lg = login(request, user=request.user)
-    Response(data=lg)
+    return Response (
+        data=lg
+    )

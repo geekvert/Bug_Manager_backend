@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'djrichtextfield',
     'oauth2_provider',
+    'corsheaders',
     'backend',
     'channels'
 ]
@@ -55,7 +56,15 @@ DJRICHTEXTFIELD_CONFIG = {
     }
 }
 
+# configuring cors
+CORS_ORIGIN_ALLOW_ALL = False
+CORS_ORIGIN_WHITELIST = (
+    'http://localhost:3000',
+    'http://localhost:3001',
+)
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
