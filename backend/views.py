@@ -82,7 +82,7 @@ def Auth(request):
             imgian = True
 
     if not imgian:
-        Response(
+        return Response(
             data = 'You are not allowed to use this app as you are not an IMGIAN.',
             status = status.HTTP_401_UNAUTHORIZED
         )
@@ -126,8 +126,25 @@ class ProjectViewSet(ModelViewSet):
 # project_page, bug_page
 class ProjectBugViewSet(ModelViewSet):
     serializer_class = BugSerializer
-    lookup_field = 'heading'
+    # lookup_field = 'heading'
     # permission_classes = [CreatorTeamAdminPermission]
+
+    # def create(self, request, *args, **kwargs):
+    #     project = Project.objects.get(name=request.data['project'])
+    #     reported_by = User.objects.get(username=request.data['reported_by'])
+    #     tags = []
+    #     for tag in request.data['tags']:
+    #         tags.append(Tag.objects.get(name=tag))
+    #     print('CHK1')
+    #     assigned_to = User.objects.get(username=request.data['reported_by']) if request.data['assigned_to'] else None
+    #     print('CHK2')
+    #     serializer = self.get_serializer(data=request.data)
+    #     print('CHK3')
+    #     serializer.is_valid(raise_exception=True)
+    #     print('CHK4')
+    #     print('serializer data'+repr(serializer.data))
+    #     serializer.save(project_id=project.id, reported_by_id=reported_by.id, assigned_to_id=assigned_to.id, tags=tags)
+    #     return Response(serializer.data)
 
     # function to map project_names to their ids
     def nameMAPpk(self, project_name):
@@ -145,14 +162,14 @@ class MyPage(ModelViewSet):
     # permission_classes = [IsAuthenticated]
 
     # function to map usernames to their ids
-    def nameMAPpk(self, my_name):
-        id = User.objects.get(username = my_name)
+    def nameMAPpk(self, enrollment_no):
+        id = User.objects.get(enrollment_no = enrollment_no)
         return id
 
     def get_queryset(self):
-        my_name = self.request.query_params.get('my_name')
-        query1 = Bug.objects.filter(reported_by = self.nameMAPpk(my_name))
-        query2 = Bug.objects.filter(assigned_to = self.nameMAPpk(my_name))
+        enrollment_no = self.request.query_params.get('enrollment_no')
+        query1 = Bug.objects.filter(reported_by = self.nameMAPpk(enrollment_no))
+        query2 = Bug.objects.filter(assigned_to = self.nameMAPpk(enrollment_no))
         return query1 | query2
 
 # admin_page
@@ -160,7 +177,33 @@ class UserViewSet(ModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all()
     # permission_classes = [AdminPermission]
-    lookup_field = 'username'
+    lookup_field = 'enrollment_no'
+    permission_classes = [AllowAny]
+
+# tags
+class TagViewSet(ModelViewSet):
+    serializer_class = TagSerializer
+    queryset = Tag.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        creator = User.objects.get(username=request.data['creator'])
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(creator_id=creator.id)
+        return Response(serializer.data)
+
+    # def create(self, request, *args, **kwargs):
+    #     # data = {
+    #     #     'name': request.data['name'],
+    #     #     'creator': User.objects.get(request.data['creator'])
+    #     # }
+    #     print('from viewset: '+repr(request.data))
+    #     serializer = self.get_serializer(data=request.data)
+    #     print(repr(serializer))
+    #     serializer.is_valid(raise_exception=True)
+    #     self.perform_create(serializer)
+    #     headers = self.get_success_headers(serializer.data)
+    #     return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 # experimental stuff
@@ -168,8 +211,6 @@ class UserViewSet(ModelViewSet):
 class testViewSet(ModelViewSet):
     serializer_class = ProjectSerializer
     queryset = Project.objects.all()
-
-    
 
     def create(self, request):
         return Response({

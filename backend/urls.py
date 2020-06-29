@@ -7,6 +7,7 @@ router.register('projects', ProjectViewSet) # homepage, project_page (detail)
 router.register('project_bug', ProjectBugViewSet, 'project_bug') # project_page (bug_list), bug_page ()
 router.register('my_page', MyPage, 'my_page') # my_page
 router.register('users', UserViewSet) # admin_page
+router.register('tags', TagViewSet)
 
 # router.register('users', testViewSet)
 
@@ -19,8 +20,3 @@ urlpatterns += [
     path('test/', testViewSet.as_view({'get': 'list', 'post': 'create'})),
     path('login/', testLogin)
 ]
-
-"""
-Homepage: projects
-project_page: project_detail + bug_list
-"""
