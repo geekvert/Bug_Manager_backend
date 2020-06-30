@@ -1,13 +1,19 @@
 from rest_framework import serializers
 from .models import *
+from collections import OrderedDict
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'first_name', 'enrollment_no', 'admin_status', 'disabled_status']
 
+class AltStringRelatedField(serializers.StringRelatedField):
+    def to_internal_value(self, value):
+        user = User.objects.get(username=value)
+        return user.id
+
 class ProjectSerializer(serializers.ModelSerializer):
-    team = serializers.StringRelatedField(many=True)
+    team = AltStringRelatedField(many=True)
     creator = serializers.StringRelatedField()
 
     class Meta:
@@ -19,15 +25,6 @@ class ImageSerializer(serializers.ModelSerializer):
         model = Image
         fields= '__all__'
 
-# class SectorClassField(serializers.StringRelatedField):
-
-#     def to_internal_value(self, value):
-#         project = models.Projects.objects.filter(name=value)
-#         if project and (len(sector_class)) == 1:
-#             return sector_class.get().id
-#         else:
-#             raise serializers.ValidationError("Sector with name: %s not found" % value)
-
 class TagSerializer(serializers.ModelSerializer):
     creator = serializers.StringRelatedField()
 
@@ -35,10 +32,14 @@ class TagSerializer(serializers.ModelSerializer):
         model = Tag
         fields= '__all__'
 
+class TagStringRelatedField(serializers.StringRelatedField):
+    def to_internal_value(self, value):
+        tag = Tag.objects.get(name=value)
+        return tag.id
+
 class BugSerializer(serializers.ModelSerializer):
     project = serializers.StringRelatedField()
-    tags = serializers.StringRelatedField(many=True)
-    # tags = TagSerializer(many=True)
+    tags = TagStringRelatedField(many=True)
     reported_by = serializers.StringRelatedField()
     assigned_to = serializers.StringRelatedField()
 

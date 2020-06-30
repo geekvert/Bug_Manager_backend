@@ -123,28 +123,38 @@ class ProjectViewSet(ModelViewSet):
     serializer_class = ProjectSerializer
     queryset = Project.objects.all()
 
+    def create(self, request, *args, **kwargs):
+        creator = User.objects.get(username=request.data['creator'])
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(creator_id=creator.id)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 # project_page, bug_page
 class ProjectBugViewSet(ModelViewSet):
     serializer_class = BugSerializer
     # lookup_field = 'heading'
     # permission_classes = [CreatorTeamAdminPermission]
 
-    # def create(self, request, *args, **kwargs):
-    #     project = Project.objects.get(name=request.data['project'])
-    #     reported_by = User.objects.get(username=request.data['reported_by'])
-    #     tags = []
-    #     for tag in request.data['tags']:
-    #         tags.append(Tag.objects.get(name=tag))
-    #     print('CHK1')
-    #     assigned_to = User.objects.get(username=request.data['reported_by']) if request.data['assigned_to'] else None
-    #     print('CHK2')
-    #     serializer = self.get_serializer(data=request.data)
-    #     print('CHK3')
-    #     serializer.is_valid(raise_exception=True)
-    #     print('CHK4')
-    #     print('serializer data'+repr(serializer.data))
-    #     serializer.save(project_id=project.id, reported_by_id=reported_by.id, assigned_to_id=assigned_to.id, tags=tags)
-    #     return Response(serializer.data)
+    def create(self, request, *args, **kwargs):
+        project = Project.objects.get(name=request.data['project'])
+        reported_by = User.objects.get(username=request.data['reported_by'])
+        
+        try:
+            assigned_to = User.objects.get(username=request.data['assigned_to'])
+            asId = assigned_to.id
+        except:
+            asId = None
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        print('VALIDATED_DATA: '+repr(serializer.validated_data))
+
+        serializer.save(project_id=project.id, reported_by_id=reported_by.id, assigned_to_id=asId)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     # function to map project_names to their ids
     def nameMAPpk(self, project_name):
