@@ -103,6 +103,7 @@ CHANNEL_LAYERS = {
         },
     },
 }
+# routing missing
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases

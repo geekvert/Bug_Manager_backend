@@ -15,8 +15,11 @@ urlpatterns = router.urls
 
 urlpatterns += [
     path('oauth/redirect/', Auth),
+    path('afterLogin/', AfterLogin),
 
     path('zoo/<enr>', testing.as_view({'get': 'list'})),
     path('test/', testViewSet.as_view({'get': 'list', 'post': 'create'})),
     path('login/', testLogin)
 ]
+
+# http://localhost:8000/oauth/redirect/

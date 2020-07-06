@@ -15,7 +15,7 @@ class User(AbstractUser):
         return self.username
 
 class Project(models.Model):
-    name = models.CharField(max_length=60)
+    name = models.CharField(max_length=60, unique=True)
     wiki = RichTextField()
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='creator', on_delete=models.SET_NULL, null=True)
     team = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='team', blank=True)
@@ -32,7 +32,7 @@ class Tag(models.Model):
         return self.name
 
 class Bug(models.Model):
-    heading = models.CharField(max_length=50)
+    heading = models.CharField(max_length=50, unique=True)
     description = models.TextField()
     reported_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='reported_by', on_delete=models.SET_NULL, null=True)
     assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='assigned_to', default=None, on_delete=models.SET_NULL, null=True, blank=True)

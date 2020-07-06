@@ -1,4 +1,5 @@
 import requests
+import json
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.viewsets import ModelViewSet
@@ -18,23 +19,24 @@ from rest_framework.decorators import action
 def Auth(request):
     client_id = 'er1eJX5UyeQgVLdDLICTjuUJKHogSrLRKfKLLIN9'
     client_secret = 'MQ4fR10F7Mti8aNMhoUKJfznpX6YwCCUffCzqrxHRDLuY9DIOZGgY3q16MVbnbbSFGrGnsXa40qOZB60twj5eK4n1OqMqExmIIOJCn0djXS57k8QAJ5OXPxndKB2E07M'
-    desired_state = 'pypy'
+
+    # desired_state = 'pypy'
 
     auth_code = request.query_params.get('code')
-    state = request.query_params.get('state')
+    # state = request.query_params.get('state')
 
-    if (state!=desired_state):
-        return Response(
-            data = 'Something went wrong, please try again later.',
-            status = status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+    # if (state!=desired_state):
+    #     return Response(
+    #         data = {'error': 'Something went wrong, please try again later.'},
+    #         status = status.HTTP_500_INTERNAL_SERVER_ERROR
+    #     )
 
     url = 'https://internet.channeli.in/open_auth/token/'
     data = {
         'client_id': client_id,
         'client_secret': client_secret,
         'grant_type': 'authorization_code',
-        'redirect_url': 'http://127.0.0.1:8000/backend/test/',
+        'redirect_url': 'http://localhost:3000/',
         'code': auth_code
     }
     omni_data = requests.post(url=url, data=data).json()
@@ -42,7 +44,7 @@ def Auth(request):
     # checking for any errors
     if ('error' in  omni_data.keys()):
         return Response(
-            data = omni_data['error'],
+            data = {'error': omni_data['error']},
             status = status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
@@ -57,7 +59,7 @@ def Auth(request):
     # checking for any errors
     if (user_data.status_code!=200):
         return Response(
-            data = user_data.json()['detail'],
+            data = {'error': user_data.json()['detail']},
             status = status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
@@ -71,7 +73,7 @@ def Auth(request):
     else:
         # here i will check whether this user has send access_token or not and log him/her in
         Response(
-            data = 'You don\'t need to signup, user already exists.',
+            data = {'error': 'You don\'t need to signup, user already exists.', 'acs_token': access_token},
             status = status.HTTP_400_BAD_REQUEST
         )
 
@@ -83,7 +85,7 @@ def Auth(request):
 
     if not imgian:
         return Response(
-            data = 'You are not allowed to use this app as you are not an IMGIAN.',
+            data = {'error': 'You are not allowed to use this app as you are not an IMGIAN.'},
             status = status.HTTP_401_UNAUTHORIZED
         )
     
@@ -103,18 +105,42 @@ def Auth(request):
         newUser.save()
     except:
         return Response(
-            data = 'Unable to create account.',
+            data = {'error': 'Unable to create account.'},
             status = status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
     return Response(
-        {'detail': 'Voila! Account created successfully!', 'access_token': access_token},
+        data = {'detail': 'Voila! Account created successfully!', 'access_token': access_token},
         status = status.HTTP_200_OK
     )
 
-# login after first time, i will write this after frontend
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def AfterLogin(request):
-    pass
+    print('AFTER LOGIN CALLED')
+    acs_token = request.query_params.get('acs_token')
+    # use refresh_token here if acs_token is invalid
+    try:
+        user = User.objects.get(access_token=acs_token)
+        data = {
+            'name': user.username,
+            'first_name': user.first_name,
+            'admin_status': user.admin_status,
+            'disabled_status': user.disabled_status
+        }
+        # serializer = UserSerializer(user)
+        # serializer.is_valid(True)
+    except:
+        return Response (
+            data = {'error': 'User not found OR invalid access token'},
+            status = status.HTTP_400_BAD_REQUEST
+        )
+
+    return Response(
+        data = {'thisUser': data},
+        status = status.HTTP_200_OK
+    )
 
 # homepage
 class ProjectViewSet(ModelViewSet):
@@ -122,6 +148,30 @@ class ProjectViewSet(ModelViewSet):
     # permission_classes = [CreatorTeamAdminPermission]
     serializer_class = ProjectSerializer
     queryset = Project.objects.all()
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+
+        if ('wiki' in request.data.keys()):
+            try:
+                assigned_to = User.objects.get(username=request.data['assigned_to'])
+                serializer.save(assigned_to_id=assigned_to.id)
+            except:
+                return Response(
+                    data = {'error': 'User doesnot exists'},
+                    status = status.HTTP_400_BAD_REQUEST
+                )            
+        else:
+            self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+        return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         creator = User.objects.get(username=request.data['creator'])
@@ -134,8 +184,32 @@ class ProjectViewSet(ModelViewSet):
 # project_page, bug_page
 class ProjectBugViewSet(ModelViewSet):
     serializer_class = BugSerializer
-    # lookup_field = 'heading'
+    lookup_field = 'heading'
     # permission_classes = [CreatorTeamAdminPermission]
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+
+        if ('assigned_to' in request.data.keys()):
+            try:
+                assigned_to = User.objects.get(username=request.data['assigned_to'])
+                serializer.save(assigned_to_id=assigned_to.id)
+            except:
+                return Response(
+                    data = {'error': 'User doesnot exists'},
+                    status = status.HTTP_400_BAD_REQUEST
+                )            
+        else:
+            self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+        return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         project = Project.objects.get(name=request.data['project'])
@@ -149,9 +223,6 @@ class ProjectBugViewSet(ModelViewSet):
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        print('VALIDATED_DATA: '+repr(serializer.validated_data))
-
         serializer.save(project_id=project.id, reported_by_id=reported_by.id, assigned_to_id=asId)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
@@ -165,6 +236,8 @@ class ProjectBugViewSet(ModelViewSet):
         project_name = self.request.query_params.get('project_name')
         queryset = Bug.objects.filter(project_id = self.nameMAPpk(project_name))
         return queryset
+
+# Bug Viewset
 
 # my_page
 class MyPage(ModelViewSet):
@@ -217,15 +290,9 @@ class TagViewSet(ModelViewSet):
 
 
 # experimental stuff
-
 class testViewSet(ModelViewSet):
     serializer_class = ProjectSerializer
     queryset = Project.objects.all()
-
-    def create(self, request):
-        return Response({
-            'data': 'post method called'
-        })
 
 @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
