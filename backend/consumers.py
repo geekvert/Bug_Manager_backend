@@ -10,7 +10,6 @@ class CommentConsumer(WebsocketConsumer):
     def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['bug_heading']   # prob
         self.room_group_name = f'group_{self.room_name}'
-        print('ROOM NAME: '+self.room_name)
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name,
             self.channel_name
@@ -29,20 +28,20 @@ class CommentConsumer(WebsocketConsumer):
         comment = data['comment']
         
         try:
-            newComment = Comment(body=comment, buggy=bug, commentator=user)
+            newComment = Comment(body=comment, buggy_id=bug.id, commentator_id=user.id)
             newComment.save()
         except:
             # returning error response
-            self.send_comment({'command': 'Some error happened in saving comment'})
-
-        content = {
-            'command': 'add_comment',
-            'comment': self.comment_to_json(newComment),
-        }
-        self.send_content(content)
+            self.send_content({'command': 'Some error happened in saving comment'})
+        else:
+            content = {
+                'command': 'add_comment',
+                'comment': self.comment_to_json(newComment),
+            }
+            self.send_content(content)
 
     def fetch_comments(self, data):
-        comments = Comment.objects.filter(buggy=Bug.objects.get(heading=data['bug_heading']))
+        comments = Comment.objects.filter(buggy_id=Bug.objects.get(heading=data['bug_heading']).id)
         content = {
             'command': 'fetch_comments',
             'comments': self.comments_to_json(comments)
@@ -66,8 +65,6 @@ class CommentConsumer(WebsocketConsumer):
         #     comment (body),
         # }
 
-    
-
     def comments_to_json(self, comments):
         result = []
         for comment in comments:
@@ -78,9 +75,9 @@ class CommentConsumer(WebsocketConsumer):
         return {
             'id': str(comment.id),
             'body': comment.body,
-            'commentator': comment.commentator, # maybe str() krna pade yaha
-            'bug': comment.buggy,
-            'timesatmp': str(comment.timesatmp),
+            'commentator': str(comment.commentator),
+            'bug': str(comment.buggy),
+            'timestamp': str(comment.timestamp),
         }
 
     # def send_content(self, content):
@@ -93,6 +90,3 @@ class CommentConsumer(WebsocketConsumer):
             self.room_group_name,
             content
         )
-
-# user -> room_group pe subscribe -> whenever message send/received sabpe jaayega
-# har bug ke liye alag room hoga
