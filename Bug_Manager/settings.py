@@ -15,7 +15,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -31,7 +30,7 @@ INSTALLED_APPS = [
     'oauth2_provider',
     'corsheaders',
     'backend',
-    'channels'
+    'channels',
 ]
 
 AUTH_USER_MODEL = 'backend.User'
@@ -57,7 +56,7 @@ DJRICHTEXTFIELD_CONFIG = {
 }
 
 # configuring cors
-CORS_ORIGIN_ALLOW_ALL = False
+# CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST = (
     'http://localhost:3000',
     'http://localhost:3001',
@@ -99,11 +98,11 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+            'hosts': ['redis://localhost:6379'],
+            # 'hosts': [('127.0.0.1', 6379)],
         },
     },
 }
-# routing missing
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
@@ -114,7 +113,6 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -151,5 +149,8 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
+
+MEDIA_ROOT =  os.path.join(BASE_DIR, 'media') 
+MEDIA_URL = '/media/'
 
 STATIC_URL = '/static/'

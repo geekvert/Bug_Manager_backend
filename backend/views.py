@@ -6,6 +6,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework import status, generics
 from django.contrib.auth import login, logout
+from rest_framework.parsers import MultiPartParser, FormParser
 from .models import *
 from .serializers import *
 from .permissions import *
@@ -71,10 +72,13 @@ def Auth(request):
     except:
         pass
     else:
-        # here i will check whether this user has send access_token or not and log him/her in
-        Response(
-            data = {'error': 'You don\'t need to signup, user already exists.', 'acs_token': access_token},
-            status = status.HTTP_400_BAD_REQUEST
+        # update user info (new access & refresh tokens)
+        exist.access_token = access_token
+        exist.refresh_token = refresh_token
+        exist.save()
+        return Response(
+            data = {'detail': 'Voila! Account created successfully!', 'access_token': access_token},
+            status = status.HTTP_200_OK
         )
 
     # are you an imgian?
@@ -288,6 +292,27 @@ class TagViewSet(ModelViewSet):
     #     headers = self.get_success_headers(serializer.data)
     #     return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+class ImageViewSet(ModelViewSet):
+    serializer_class = ImageSerializer
+    queryset = Image.objects.all()
+
+    # function to map project_names to their ids
+    def headingMAPpk(self, bug_heading):
+        id = Bug.objects.get(heading=bug_heading)
+        return id
+    
+    def get_queryset(self):
+        bug_heading = self.request.query_params.get('bug_heading')
+        queryset = Image.objects.filter(bug_id=self.headingMAPpk(bug_heading))
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        request.data['bug'] = Bug.objects.get(heading=request.data['bug']).id
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 # experimental stuff
 class testViewSet(ModelViewSet):

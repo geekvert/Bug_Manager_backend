@@ -52,7 +52,7 @@ class Bug(models.Model):
 
 class Image(models.Model):
     def upload_to(self, filename):
-        return os.path.join('backend', 'bug_images', self.bug.heading, filename)
+        return os.path.join('bug_images', self.bug.heading, filename)
 
     bug = models.ForeignKey(Bug, on_delete=models.CASCADE)
     image = models.ImageField(upload_to=upload_to)

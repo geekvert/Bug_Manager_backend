@@ -8,6 +8,7 @@ router.register('project_bug', ProjectBugViewSet, 'project_bug') # project_page 
 router.register('my_page', MyPage, 'my_page') # my_page
 router.register('users', UserViewSet) # admin_page
 router.register('tags', TagViewSet)
+router.register('bug_images', ImageViewSet, 'bug_images')
 
 # router.register('users', testViewSet)
 
