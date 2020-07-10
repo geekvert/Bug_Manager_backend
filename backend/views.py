@@ -1,5 +1,5 @@
-import requests
 import json
+import requests
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.viewsets import ModelViewSet
@@ -14,23 +14,15 @@ from .permissions import *
 from django.http import HttpResponse
 from rest_framework.decorators import action
 
-# Oauth wala view
+# Oauth's view
 @api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
 def Auth(request):
     client_id = 'er1eJX5UyeQgVLdDLICTjuUJKHogSrLRKfKLLIN9'
     client_secret = 'MQ4fR10F7Mti8aNMhoUKJfznpX6YwCCUffCzqrxHRDLuY9DIOZGgY3q16MVbnbbSFGrGnsXa40qOZB60twj5eK4n1OqMqExmIIOJCn0djXS57k8QAJ5OXPxndKB2E07M'
-
     # desired_state = 'pypy'
 
     auth_code = request.query_params.get('code')
-    # state = request.query_params.get('state')
-
-    # if (state!=desired_state):
-    #     return Response(
-    #         data = {'error': 'Something went wrong, please try again later.'},
-    #         status = status.HTTP_500_INTERNAL_SERVER_ERROR
-    #     )
 
     url = 'https://internet.channeli.in/open_auth/token/'
     data = {
@@ -72,7 +64,7 @@ def Auth(request):
     except:
         pass
     else:
-        # update user info (new access & refresh tokens)
+        # updating user info (new access & refresh tokens)
         exist.access_token = access_token
         exist.refresh_token = refresh_token
         exist.save()
@@ -124,7 +116,6 @@ def Auth(request):
 def AfterLogin(request):
     print('AFTER LOGIN CALLED')
     acs_token = request.query_params.get('acs_token')
-    # use refresh_token here if acs_token is invalid
     try:
         user = User.objects.get(access_token=acs_token)
         data = {
@@ -133,8 +124,6 @@ def AfterLogin(request):
             'admin_status': user.admin_status,
             'disabled_status': user.disabled_status
         }
-        # serializer = UserSerializer(user)
-        # serializer.is_valid(True)
     except:
         return Response (
             data = {'error': 'User not found OR invalid access token'},
@@ -149,7 +138,7 @@ def AfterLogin(request):
 # homepage
 class ProjectViewSet(ModelViewSet):
     lookup_field = 'name'
-    # permission_classes = [CreatorTeamAdminPermission]
+    permission_classes = [CreatorTeamAdminPermission]
     serializer_class = ProjectSerializer
     queryset = Project.objects.all()
 
@@ -189,7 +178,7 @@ class ProjectViewSet(ModelViewSet):
 class ProjectBugViewSet(ModelViewSet):
     serializer_class = BugSerializer
     lookup_field = 'heading'
-    # permission_classes = [CreatorTeamAdminPermission]
+    permission_classes = [CreatorTeamAdminPermission]
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -241,8 +230,6 @@ class ProjectBugViewSet(ModelViewSet):
         queryset = Bug.objects.filter(project_id = self.nameMAPpk(project_name))
         return queryset
 
-# Bug Viewset
-
 # my_page
 class MyPage(ModelViewSet):
     serializer_class = BugSerializer
@@ -263,7 +250,7 @@ class MyPage(ModelViewSet):
 class UserViewSet(ModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all()
-    # permission_classes = [AdminPermission]
+    permission_classes = [AdminPermission]
     lookup_field = 'enrollment_no'
     permission_classes = [AllowAny]
 
@@ -278,19 +265,6 @@ class TagViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(creator_id=creator.id)
         return Response(serializer.data)
-
-    # def create(self, request, *args, **kwargs):
-    #     # data = {
-    #     #     'name': request.data['name'],
-    #     #     'creator': User.objects.get(request.data['creator'])
-    #     # }
-    #     print('from viewset: '+repr(request.data))
-    #     serializer = self.get_serializer(data=request.data)
-    #     print(repr(serializer))
-    #     serializer.is_valid(raise_exception=True)
-    #     self.perform_create(serializer)
-    #     headers = self.get_success_headers(serializer.data)
-    #     return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 class ImageViewSet(ModelViewSet):
     serializer_class = ImageSerializer
@@ -313,30 +287,3 @@ class ImageViewSet(ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
-# experimental stuff
-class testViewSet(ModelViewSet):
-    serializer_class = ProjectSerializer
-    queryset = Project.objects.all()
-
-@api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-def testView(request):
-    # login(request=request, user=request.user)
-    return Response(request.data)
-
-# most important thing that i have learned today
-class testing(ModelViewSet):
-    serializer_class = UserSerializer
-    lookup_url_kwarg = 'enr'
-
-    def get_queryset(self):
-        enr = self.kwargs.get(self.lookup_url_kwarg)
-        return User.objects.filter(enrollment_no=enr)
-
-@api_view(['GET', 'POST'])
-def testLogin(request):
-    lg = login(request, user=request.user)
-    return Response (
-        data=lg
-    )

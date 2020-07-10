@@ -18,7 +18,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields= '__all__' # ['name', 'wiki', 'creator', 'team', 'timestamp']
+        fields= '__all__'
 
 class ImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -46,10 +46,6 @@ class BugSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bug
         fields = ['heading', 'description', 'status', 'reported_by', 'assigned_to', 'project', 'tags', 'timestamp']
-
-    # def update(self, instance, validated_data):
-    #     print(repr(validated_data), repr(self.data))
-    #     return instance
 
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:

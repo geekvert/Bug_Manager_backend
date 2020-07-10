@@ -4,12 +4,11 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from .models import User, Bug, Comment
 
-# User = get_user_model() # Ambiguous
-
 class CommentConsumer(WebsocketConsumer):
     def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['bug_heading']   # prob
-        self.room_group_name = f'group_{self.room_name}'
+        bug = Bug.objects.get(heading=self.room_name)
+        self.room_group_name = f'group_{bug.id}'
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name,
             self.channel_name
@@ -31,7 +30,6 @@ class CommentConsumer(WebsocketConsumer):
             newComment = Comment(body=comment, buggy_id=bug.id, commentator_id=user.id)
             newComment.save()
         except:
-            # returning error response
             self.send_content({'command': 'Some error happened in saving comment'})
         else:
             content = {
@@ -58,13 +56,6 @@ class CommentConsumer(WebsocketConsumer):
         print(repr(data))
         self.commands[data['command']](self, data)
 
-        # incoming text data for add_comment
-        # {
-        #     access_token,
-        #     bug_heading,
-        #     comment (body),
-        # }
-
     def comments_to_json(self, comments):
         result = []
         for comment in comments:
@@ -80,13 +71,15 @@ class CommentConsumer(WebsocketConsumer):
             'timestamp': str(comment.timestamp),
         }
 
-    # def send_content(self, content):
-    #     self.send(text_data=json.dumps(content))
-
-    # functions responsible for sending data
     def send_content(self, content):
-        # Send comments to room group
-        async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name,
-            content
-        )
+        self.send(text_data=json.dumps(content))
+
+    # In doubt
+    # def send_content(self, content):
+    #     # Send comments to room group
+    #     async_to_sync(self.channel_layer.group_send)(
+    #         self.room_group_name,
+    #         {
+    #             'type': 
+    #         }
+    #     )
