@@ -1,12 +1,13 @@
 import json
 import requests
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny   
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework import status, generics
 from django.contrib.auth import login, logout
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.core.mail import send_mail
 from .models import *
 from .serializers import *
 from .permissions import *
@@ -218,6 +219,7 @@ class ProjectBugViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(project_id=project.id, reported_by_id=reported_by.id, assigned_to_id=asId)
         headers = self.get_success_headers(serializer.data)
+
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     # function to map project_names to their ids
@@ -227,13 +229,14 @@ class ProjectBugViewSet(ModelViewSet):
 
     def get_queryset(self):
         project_name = self.request.query_params.get('project_name')
+        print('project_name: '+self.request.GET.get('project_name', ''))
         queryset = Bug.objects.filter(project_id = self.nameMAPpk(project_name))
         return queryset
 
 # my_page
 class MyPage(ModelViewSet):
     serializer_class = BugSerializer
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     # function to map usernames to their ids
     def nameMAPpk(self, enrollment_no):

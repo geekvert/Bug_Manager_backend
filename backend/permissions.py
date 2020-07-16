@@ -6,6 +6,7 @@ class CreatorTeamAdminPermission(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS or request.method == 'POST':
             return True
         cta = request.user in obj.team or request.user == obj.creator or request.user.admin_status # team or creator or admin
+        print('LOGGING CTA: '+cta)
         return cta
 
 # for userviewset
@@ -13,4 +14,11 @@ class AdminPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.user.admin_status:
             return True
-        False
+        return False
+
+# default permission class
+class NotDisabled(permissions.IsAuthenticated):
+    def has_permission(self, request, view):
+        if request.user.disabled_status:
+            return False
+        return True
