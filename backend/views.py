@@ -14,6 +14,7 @@ from .permissions import *
 
 from django.http import HttpResponse
 from rest_framework.decorators import action
+from django.core.mail import send_mail
 
 # Oauth's view
 @api_view(['GET', 'POST'])
@@ -193,9 +194,21 @@ class ProjectBugViewSet(ModelViewSet):
                 serializer.save(assigned_to_id=assigned_to.id)
             except:
                 return Response(
-                    data = {'error': 'User doesnot exists'},
+                    data = {'error': 'User does not exists'},
                     status = status.HTTP_400_BAD_REQUEST
-                )            
+                )
+            # sending email
+            project_name = self.request.query_params.get('project_name')
+            subject = f"Bug assigned to you."
+            message = f"A bug in project '{project_name}' has been assigned to you!"
+
+            send_mail(
+                subject,
+                message,
+                'your_email_address',
+                [assigned_to.email],
+            )            
+
         else:
             self.perform_update(serializer)
 
@@ -219,6 +232,21 @@ class ProjectBugViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(project_id=project.id, reported_by_id=reported_by.id, assigned_to_id=asId)
         headers = self.get_success_headers(serializer.data)
+        # sending email
+        email_subject = f"New bug reported in Project '{project.name}'!"
+        email_message = f"A new Bug has been reported by {reported_by.name} in your project."
+        receivers_list = []
+        receivers_list.append(project.creator.email)
+        team = project.team.all()
+        for member in team:
+            receivers_list.append(member.email)
+
+        send_mail(
+            email_subject,
+            email_message,
+            'from@gmail.com',
+            receivers_list,
+        )
 
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 

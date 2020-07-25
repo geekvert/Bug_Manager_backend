@@ -61,6 +61,17 @@ CORS_ORIGIN_WHITELIST = (
     'http://localhost:3001',
 )
 
+# email integration
+# don't forget to allow less secure apps to use
+# your email account if you are using a personalized gmail account
+EMAIL_USE_TLS = True
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_PASSWORD='your_password'
+EMAIL_HOST_USER='your_email_address'
+EMAIL_PORT = 587
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
