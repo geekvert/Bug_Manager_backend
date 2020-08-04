@@ -40,6 +40,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'backend.permissions.NotDisabled',
+        # 'rest_framework.permissions.AllowAny'
     ]
 }
 

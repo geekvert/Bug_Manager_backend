@@ -149,18 +149,7 @@ class ProjectViewSet(ModelViewSet):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-
-        if ('wiki' in request.data.keys()):
-            try:
-                assigned_to = User.objects.get(username=request.data['assigned_to'])
-                serializer.save(assigned_to_id=assigned_to.id)
-            except:
-                return Response(
-                    data = {'error': 'User doesnot exists'},
-                    status = status.HTTP_400_BAD_REQUEST
-                )            
-        else:
-            self.perform_update(serializer)
+        self.perform_update(serializer)
 
         if getattr(instance, '_prefetched_objects_cache', None):
             # If 'prefetch_related' has been applied to a queryset, we need to
@@ -232,9 +221,10 @@ class ProjectBugViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(project_id=project.id, reported_by_id=reported_by.id, assigned_to_id=asId)
         headers = self.get_success_headers(serializer.data)
+
         # sending email
         email_subject = f"New bug reported in Project '{project.name}'!"
-        email_message = f"A new Bug has been reported by {reported_by.name} in your project."
+        email_message = f"A new Bug has been reported by {reported_by.username} in your project."
         receivers_list = []
         receivers_list.append(project.creator.email)
         team = project.team.all()
@@ -257,14 +247,12 @@ class ProjectBugViewSet(ModelViewSet):
 
     def get_queryset(self):
         project_name = self.request.query_params.get('project_name')
-        print('project_name: '+self.request.GET.get('project_name', ''))
         queryset = Bug.objects.filter(project_id = self.nameMAPpk(project_name))
         return queryset
 
 # my_page
 class MyPage(ModelViewSet):
     serializer_class = BugSerializer
-    permission_classes = [IsAuthenticated]
 
     # function to map usernames to their ids
     def nameMAPpk(self, enrollment_no):
@@ -283,7 +271,6 @@ class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     permission_classes = [AdminPermission]
     lookup_field = 'enrollment_no'
-    permission_classes = [AllowAny]
 
 # tags
 class TagViewSet(ModelViewSet):
